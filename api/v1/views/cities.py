@@ -76,4 +76,4 @@ def cities_id(ident):
                 return putcity(c)
             elif request.method == 'DELETE':
                 return deletecity(c)
-    return not_found(None)
+    return not_found(None))
