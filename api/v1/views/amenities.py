@@ -2,7 +2,7 @@
 """
 Creates a new view for Amenity objects for all default API actions
 """
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort
 from api.v1.views import app_views
 from models import storage
 from models.amenity import Amenity
@@ -21,7 +21,7 @@ def putamen(amen):
     for (k, v) in new.items():
         if k is not 'id' and k is not 'created_at' and k is not 'updated_at':
             setattr(amen, k, v)
-    amen.save()
+    storage.save()
     return (amen.to_dict(), 200)
 
 
