@@ -20,12 +20,13 @@ def putcity(city):
     for (k, v) in new.items():
         if k != 'id' and k != 'created_at' and k != 'updated_at':
             setattr(city, k, v)
+    city.save()
     return (city.to_dict(), 200)
 
 
 def deletecity(city):
     storage.delete(city)
-    storage.reload()
+    storage.save()
     return ({}, 200)
 
 
