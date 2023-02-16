@@ -2,9 +2,8 @@
 """
 Creates a new view for objects for all default API actions
 """
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort
 from api.v1.views import app_views
-from api.v1.app import not_found
 from models import storage
 from models.city import City
 
@@ -16,10 +15,9 @@ def getcity(city):
 
 def putcity(city):
     """Update object"""
-    try:
-        new = request.get_json()
-    except:
-        return ({"error": "Not a JSON"}, 400)
+    if not request.is_json:
+        abort(400, "Not a JSON")
+    new = request.get_json()
     for (k, v) in new.items():
         if k != 'id' and k != 'created_at' and k != 'updated_at':
             setattr(city, k, v)
@@ -50,10 +48,9 @@ def cities(state_id):
                 all_cities.append(x.to_dict())
         return (jsonify(all_cities), 200)
     elif request.method == 'POST':
-        try:
-            new = request.get_json()
-        except:
-            return ({"error": "Not a JSON"}, 400)
+        if not request.is_json:
+            abort(400, "Not a JSON")
+        new = request.get_json()
         if 'name' not in new.keys():
             return ({"error": "Missing name"}, 400)
         x = City()
@@ -76,4 +73,4 @@ def cities_id(ident):
                 return putcity(c)
             elif request.method == 'DELETE':
                 return deletecity(c)
-    return not_found(None))
+    abort(404, 'Not found')
