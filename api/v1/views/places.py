@@ -2,9 +2,8 @@
 """
 Creates a new view for objects for all default API actions
 """
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort
 from api.v1.views import app_views
-from api.v1.app import not_found
 from models import storage
 from models.place import Place
 
@@ -16,14 +15,17 @@ def getplace(place):
 
 def putplace(place):
     """Update object"""
-    try:
-        new = request.get_json()
-    except:
-        return ({"error": "Not a JSON"}, 400)
+    if not request.is_json:
+        abort(400, "Not a JSON")
+    new = request.get_json()
     for (k, v) in new.items():
-        if k != 'id' and k != 'created_at' and k != 'updated_at':
+        if k != 'id' and \
+                k != 'created_at' and \
+                k != 'updated_at' and \
+                k != 'user_id' and \
+                k != 'city_id':
             setattr(place, k, v)
-    place.save()
+    storage.save()
     return (place.to_dict(), 200)
 
 
@@ -42,7 +44,7 @@ def places(city_id):
         if c.id == city_id:
             city = c
     if city is None:
-        return not_found(None)
+        abort(404)
     if request.method == 'GET':
         all_places = []
         for x in storage.all('Place').values():
@@ -50,12 +52,17 @@ def places(city_id):
                 all_places.append(x.to_dict())
         return (jsonify(all_places), 200)
     elif request.method == 'POST':
-        try:
-            new = request.get_json()
-        except:
-            return ({"error": "Not a JSON"}, 400)
+        if not request.is_json:
+            abort(400, "Not a JSON")
+        new = request.get_json()
         if 'name' not in new.keys():
             return ({"error": "Missing name"}, 400)
+        if 'user_id' not in new.keys():
+            return ({"error": "Missing user_id"}, 400)
+        user_id = new['user_id']
+        y = [x.id for x in storage.all('User').values()]
+        if user_id not in y:
+            abort(404)
         x = Place()
         for (k, v) in new.items():
             setattr(x, k, v)
@@ -76,4 +83,4 @@ def places_id(ident):
                 return putplace(p)
             elif request.method == 'DELETE':
                 return deleteplace(p)
-    return not_found(None)
+    abort(404, 'Not found')
